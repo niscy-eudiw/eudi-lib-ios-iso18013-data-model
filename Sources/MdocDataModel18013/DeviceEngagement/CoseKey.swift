@@ -107,6 +107,7 @@ extension CoseKey {
 		return keyData as Data
 	}
     
+	#if canImport(Security)
     public func toSecKey() throws -> SecKey {
         var error: Unmanaged<CFError>?
         guard let publicKey = SecKeyCreateWithData(getx963Representation() as NSData, [kSecAttrKeyType as String: kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeyClass: kSecAttrKeyClassPublic] as NSDictionary, &error) else {
@@ -114,6 +115,7 @@ extension CoseKey {
         }
         return publicKey
     }
+	#endif
 }
 
 

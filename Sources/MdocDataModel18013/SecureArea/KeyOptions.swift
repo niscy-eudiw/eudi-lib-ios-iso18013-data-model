@@ -58,7 +58,6 @@ public enum KeyPurpose: String, Codable, CaseIterable, Sendable {
     case keyAgreement = "Key Agreement"
 }
 
-#if canImport(Security)
 /// Key access protection options
 ///
 /// You control an app’s access to a keychain item relative to the state of a device by setting the item’s kSecAttrAccessible attribute when you create the item.
@@ -74,6 +73,7 @@ public enum KeyAccessProtection: Int, CaseIterable, Sendable {
     /// Key data can only be accessed while the device is unlocked, requires a passcode to be set on the device.  Key not restored from device backup.
     case whenPasscodeSetThisDeviceOnly
 
+#if canImport(Security)
     /// constant to use for the kSecAttrAccessible attribute
     public var constant: CFString {
         switch self {
@@ -84,6 +84,7 @@ public enum KeyAccessProtection: Int, CaseIterable, Sendable {
         case .whenPasscodeSetThisDeviceOnly: kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly
         }
     }
+#endif
 }
 /// Key access control settings
 ///
@@ -99,11 +100,13 @@ public struct KeyAccessControl: OptionSet, Sendable {
     /// Require application provided password for additional data encryption key generation
     public static let requireApplicationPassword = KeyAccessControl(rawValue: 1 << 1)
 
+#if canImport(Security)
     public var flags: SecAccessControlCreateFlags {
         var result: SecAccessControlCreateFlags = []
         if contains(.requireUserPresence) { result.insert(.userPresence) }
         if contains(.requireApplicationPassword) { result.insert(.applicationPassword) }
         return result
     }
-}
 #endif
+}
+

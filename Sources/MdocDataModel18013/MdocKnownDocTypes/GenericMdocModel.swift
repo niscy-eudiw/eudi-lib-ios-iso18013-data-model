@@ -3,7 +3,7 @@
 
 import Foundation
 
-public class GenericMdocModel: DocClaimsDecodable, ObservableObject, @unchecked Sendable {
+public class GenericMdocModel: DocClaimsDecodable, @unchecked Sendable {
     public var display: [DisplayMetadata]?
     public var issuerDisplay: [DisplayMetadata]?
     public var credentialIssuerIdentifier: String?
@@ -12,7 +12,7 @@ public class GenericMdocModel: DocClaimsDecodable, ObservableObject, @unchecked 
     internal var _validUntil: Date?
     public var validUntil: Date? { if let uc = credentialsUsageCounts, uc.remaining <= 0 { return nil } else { return _validUntil } }
     public var statusIdentifier: StatusIdentifier?
-    @Published public var credentialsUsageCounts: CredentialsUsageCounts?
+    public var credentialsUsageCounts: CredentialsUsageCounts?
     public var credentialPolicy: CredentialPolicy
     public var secureAreaName: String?
 	public var id: String = UUID().uuidString

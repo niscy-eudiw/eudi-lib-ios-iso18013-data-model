@@ -29,9 +29,11 @@ public struct SecureAreaError: LocalizedError, CustomStringConvertible {
     public var errorDescription: String? { message }
 }
 
+#if canImport(Security)
 extension OSStatus {
     /// A human readable message for the status.
     public var message: String {
         return (SecCopyErrorMessageString(self, nil) as String?) ?? String(self)
     }
 }
+#endif
