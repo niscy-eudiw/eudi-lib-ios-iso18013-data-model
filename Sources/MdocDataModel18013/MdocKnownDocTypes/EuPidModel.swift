@@ -90,7 +90,7 @@ public final class EuPidModel: DocClaimsModel, @unchecked Sendable {
         case trust_anchor
 	}
 	static var mandatoryElementCodingKeys: [CodingKeys] {
-		[.family_name, .given_name, .birth_date]
+		[.family_name, .given_name, .birth_date, .birth_place, .nationality]
 	}
     public static var pidMandatoryElementKeys: [DataElementIdentifier] { ["age_over_18"] + mandatoryElementCodingKeys.map(\.rawValue) }
 	public var mandatoryElementKeys: [DataElementIdentifier] { Self.pidMandatoryElementKeys }
