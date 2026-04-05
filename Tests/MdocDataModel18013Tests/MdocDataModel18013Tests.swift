@@ -316,7 +316,7 @@ struct MdocDataModel18013Tests {
 		let spec = try ZkSystemSpec(jsonData: jsonData)
 
 		#expect(spec.system == "longfellow-libzk-v1")
-		#expect(spec.id == "longfellow-libzk-v1")
+		#expect(spec.zkSystemId == "longfellow-libzk-v1")
 		#expect(spec.params["circuit_hash"]?.stringValue == "137e5a75ce72735a37c8a72da1a8a0a5df8d13365c2ae3d2c2bd6a0e7197c7c6")
 		#expect(spec.params["version"]?.intValue == 6)
 		#expect(spec.params["block_enc_hash"]?.intValue == 4096)
