@@ -25,7 +25,6 @@ import SwiftCBOR
 public enum DeviceRetrievalMethod: Equatable, Sendable {
     static var version: UInt64 { 1 }
 
-    case qr
     case nfc(maxLenCommand: UInt64, maxLenResponse: UInt64)
     case ble(isBleServer: Bool, uuid: UUID)
     //  case wifiaware // not supported in ios
@@ -38,8 +37,6 @@ extension DeviceRetrievalMethod: CBOREncodable {
 	public func toCBOR(options: CBOROptions) -> CBOR {
         var cborArr = [CBOR]()
         switch self {
-        case .qr:
-            Self.appendTypeAndVersion(&cborArr, type: 0)
         case .nfc(let maxLenCommand, let maxLenResponse):
             Self.appendTypeAndVersion(&cborArr, type: 1)
             let options: CBOR = [0: .unsignedInt(maxLenCommand), 1: .unsignedInt(maxLenResponse)]
@@ -59,8 +56,6 @@ extension DeviceRetrievalMethod: CBORDecodable {
         guard case let .unsignedInt(type) = arr[0] else { throw .invalidCbor("device retrieval method") }
         guard case let .unsignedInt(v) = arr[1], v == Self.version else { throw .invalidCbor("device retrieval method") }
         switch type {
-        case 0:
-            self = .qr
         case 1:
             guard case let .map(options) = arr[2] else { throw .invalidCbor("device retrieval method") }
             guard case let .unsignedInt(mlc) = options[0], case let .unsignedInt(mlr) = options[1]  else { throw .invalidCbor("device retrieval method") }
