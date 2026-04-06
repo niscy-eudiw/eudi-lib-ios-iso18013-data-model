@@ -33,12 +33,19 @@ public struct DeviceAuth: Sendable {
 
 extension DeviceAuth: CBORDecodable {
 	public init(cbor: CBOR) throws(MdocValidationError) {
-		guard case let .map(m) = cbor else { throw .invalidCbor("device authentication") }
-		if let cs = m[Keys.deviceSignature] {
-			if let ds = Cose(type: .sign1, cbor: cs) { coseMacOrSignature = ds } else { throw .invalidCbor("device authentication") }
-		} else if let cm = m[Keys.deviceMac] {
-			if let dm = Cose(type: .mac0, cbor: cm) { coseMacOrSignature = dm } else { throw .invalidCbor("device authentication") }
-		} else { throw .invalidCbor("device authentication") }
+		guard case let .map(m) = cbor else { throw .invalidCbor("Device authentication must be a map") }
+		let cs = m[Keys.deviceSignature]
+		let cm = m[Keys.deviceMac]
+		switch (cs, cm) {
+		case let (cs?, nil):
+			if let ds = Cose(type: .sign1, cbor: cs) { coseMacOrSignature = ds } else { throw .invalidCbor("Device authentication invalid DeviceSignature") }
+		case let (nil, cm?):
+			if let dm = Cose(type: .mac0, cbor: cm) { coseMacOrSignature = dm } else { throw .invalidCbor("Device authentication invalid DeviceMac") }
+		case (.some, .some):
+			throw .invalidCbor("DeviceMac and DeviceSignature cannot both be present")
+		case (nil, nil):
+			throw .invalidCbor("Either DeviceMac or DeviceSignature must be present")
+		}
 	}
 }
 

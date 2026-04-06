@@ -228,6 +228,19 @@ struct MdocDataModel18013Tests {
         #expect(dr2.version == "1.0")
 	}
 
+	@Test func decodeDeviceAuthRejectsMutuallyExclusiveFields() throws {
+		let deviceSignature = Cose(type: .sign1, algorithm: Cose.VerifyAlgorithm.es256.rawValue, signature: Data([0x01]))
+		let deviceMac = Cose(type: .mac0, algorithm: Cose.MacAlgorithm.hmac256.rawValue, signature: Data([0x02]))
+		let cbor = CBOR.map([
+			.utf8String("deviceSignature"): deviceSignature.toCBOR(options: CBOROptions()),
+			.utf8String("deviceMac"): deviceMac.toCBOR(options: CBOROptions())
+		])
+
+		#expect(throws: MdocValidationError.self) {
+			try DeviceAuth(cbor: cbor)
+		}
+	}
+
   #if os(iOS)
     @Test func generateBLEengageQRCodeImage() async throws {
         var de = try #require(DeviceEngagement(isBleServer: true))
