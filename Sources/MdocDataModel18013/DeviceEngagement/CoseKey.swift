@@ -48,11 +48,13 @@ public struct CoseKeyPrivate: Sendable {
     public var index: Int!
     public var secureArea: (any SecureArea)!
 
-    public init(privateKeyId: String, index: Int, secureArea: any SecureArea) {
+    public init(privateKeyId: String, index: Int, secureArea: any SecureArea, curve: CoseEcCurve = .P256) async throws {
         logger.info("Loading cose key private with id: \(privateKeyId)")
 		self.privateKeyId = privateKeyId
         self.index = index
 		self.secureArea = secureArea
+		try await makeKey(curve: curve)
+		self.key = try await secureArea.getPublicKey(id: privateKeyId, index: index, curve: curve)
 	}
 
     public init(secureArea: any SecureArea) {
@@ -67,7 +69,15 @@ extension CoseKeyPrivate {
         let ephemeralKeyId = UUID().uuidString
         index = 0
         privateKeyId = ephemeralKeyId
-        self.key = (try await secureArea.createKeyBatch(id: ephemeralKeyId, credentialOptions: CredentialOptions(credentialPolicy: .rotateUse, batchSize: 1), keyOptions: KeyOptions(curve: curve))).first!
+        let createdKeys = try await secureArea.createKeyBatch(
+            id: ephemeralKeyId,
+            credentialOptions: CredentialOptions(credentialPolicy: .rotateUse, batchSize: 1),
+            keyOptions: KeyOptions(curve: curve)
+        )
+        guard let firstKey = createdKeys.first else {
+            throw SecureAreaError("Secure area returned an empty key batch")
+        }
+        self.key = firstKey
 	}
 }
 
