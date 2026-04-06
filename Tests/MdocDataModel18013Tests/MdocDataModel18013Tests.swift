@@ -69,7 +69,7 @@ struct MdocDataModel18013Tests {
 	}
 
     // test based on D.4.1.1 mdoc request section of the ISO/IEC FDIS 18013-5 document
-	@Test func decodeDeviceRequest() throws {
+    @Test func decodeDeviceRequest() throws {
 		let dr = try DeviceRequest(data: AnnexdTestData.d411.bytes)
 		let testItems = ["family_name", "document_number", "driving_privileges", "issue_date", "expiry_date", "portrait"].sorted()
         #expect(dr.version == "1.0")
@@ -83,6 +83,18 @@ struct MdocDataModel18013Tests {
 		let isoKeys: [IsoMdlModel.CodingKeys] = [.familyName, .documentNumber, .drivingPrivileges, .issueDate, .expiryDate, .portrait]
 		let dr3 = DeviceRequest(mdl: isoKeys, agesOver: [], intentToRetain: true)
 		#expect(dr3.docRequests.first?.itemsRequest.requestNameSpaces[IsoMdlModel.isoNamespace]?.elementIdentifiers.sorted() == testItems)
+	}
+
+	@Test func decodeDeviceRequestRejectsUnsupportedVersion() throws {
+		let cbor = try unsupportedVersionCBOR(
+			from: Self.AnnexdTestData.d411.bytes,
+			key: .utf8String("version"),
+			version: "1.9"
+		)
+
+		#expect(throws: MdocValidationError.self) {
+			try DeviceRequest(cbor: cbor)
+		}
 	}
 
 	@Test func decodeSampleDataResponse() throws {
@@ -219,6 +231,18 @@ struct MdocDataModel18013Tests {
 		#expect(model.familyName == "Doe")
 	}
 
+	@Test func decodeDeviceResponseRejectsUnsupportedVersion() throws {
+		let cbor = try unsupportedVersionCBOR(
+			from: Self.AnnexdTestData.d412.bytes,
+			key: .utf8String("version"),
+			version: "1.9"
+		)
+
+		#expect(throws: MdocValidationError.self) {
+			try DeviceResponse(cbor: cbor)
+		}
+	}
+
 	@Test func encodeDeviceResponse() throws {
 		let cborIn = try #require(try CBOR.decode(AnnexdTestData.d412.bytes))
 		let dr = try DeviceResponse(cbor: cborIn)
@@ -226,6 +250,18 @@ struct MdocDataModel18013Tests {
         // test if successfully encoded
         let dr2 = try DeviceResponse(cbor: cborDr)
         #expect(dr2.version == "1.0")
+	}
+
+	@Test func decodeDeviceEngagementRejectsUnsupportedVersion() throws {
+		let cbor = try unsupportedVersionCBOR(
+			from: Self.AnnexdTestData.d31.bytes,
+			key: .unsignedInt(0),
+			version: "1.9"
+		)
+
+		#expect(throws: MdocValidationError.self) {
+			try DeviceEngagement(cbor: cbor)
+		}
 	}
 
 	@Test func decodeDeviceAuthRejectsMutuallyExclusiveFields() throws {
@@ -335,5 +371,18 @@ struct MdocDataModel18013Tests {
 		#expect(spec.params["block_enc_hash"]?.intValue == 4096)
 		#expect(spec.params["block_enc_sig"]?.intValue == 2945)
 		#expect(spec.extensions == nil)
+	}
+
+	private func unsupportedVersionCBOR(
+		from bytes: [UInt8],
+		key: CBOR,
+		version: String
+	) throws -> CBOR {
+		let cbor = try #require(try CBOR.decode(bytes))
+		guard case .map(var map) = cbor else {
+			throw MdocValidationError.invalidCbor("test data")
+		}
+		map[key] = .utf8String(version)
+		return .map(map)
 	}
 }

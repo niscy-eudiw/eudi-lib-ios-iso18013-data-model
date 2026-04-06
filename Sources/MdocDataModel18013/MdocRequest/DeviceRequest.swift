@@ -55,8 +55,8 @@ extension DeviceRequest: CBORDecodable {
     public init(cbor: CBOR) throws(MdocValidationError) {
         guard case let .map(m) = cbor else { throw .invalidCbor("device request") }
         guard case let .utf8String(v) = m[Keys.version] else { throw .missingField("DeviceRequest", Keys.version.rawValue) }
+        try MdocVersion.validateDeviceVersion(v, component: "device request")
         version = v
-		if v.count == 0 || v.prefix(1) != "1" { throw .invalidCbor("device request") }
         guard case let .array(cdrs) = m[Keys.docRequests] else { throw .missingField("DeviceRequest", Keys.docRequests.rawValue) }
         do { docRequests = try cdrs.map { try DocRequest(cbor: $0) } } catch { throw .invalidCbor("device request") }
         guard docRequests.count > 0 else { throw .invalidCbor("device request") }

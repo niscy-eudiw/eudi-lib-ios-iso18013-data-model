@@ -41,6 +41,7 @@ import Crypto
 /// ```
 public struct DeviceEngagement: Sendable {
 	static let versionImpl: String = "1.0"
+	static let version2 = "1.1"
 	var version: String = Self.versionImpl
 	var security: Security!
 	public var originInfos: [OriginInfoWebsite]? = nil
@@ -105,7 +106,8 @@ extension DeviceEngagement: CBOREncodable {
 extension DeviceEngagement: CBORDecodable {
 	public init(cbor: CBOR) throws(MdocValidationError) {
 		guard case let .map(map) = cbor else { throw .invalidCbor("device engagement") }
-		guard let cv = map[0], case let .utf8String(v) = cv, v.prefix(2) == "1." else { throw .invalidCbor("device engagement") }
+		guard let cv = map[0], case let .utf8String(v) = cv else { throw .invalidCbor("device engagement") }
+		try MdocVersion.validateDeviceVersion(v, component: "device engagement")
 		guard let cs = map[1] else { throw .invalidCbor("device engagement") }
         security = try Security(cbor: cs)
 		if let cdrms = map[2], case let .array(drms) = cdrms, drms.count > 0 { deviceRetrievalMethods = try drms.map(DeviceRetrievalMethod.init(cbor:)) }

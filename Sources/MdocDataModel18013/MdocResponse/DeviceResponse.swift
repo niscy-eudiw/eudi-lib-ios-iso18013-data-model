@@ -60,6 +60,7 @@ extension DeviceResponse: CBORDecodable {
 	public init(cbor: CBOR) throws(MdocValidationError) {
 		guard case .map(let cd) = cbor else { throw .invalidCbor("device response") }
 		guard case .utf8String(let v) = cd[Keys.version] else { throw .missingField("DeviceResponse", Keys.version.rawValue) }
+		try MdocVersion.validateDeviceVersion(v, component: "device response")
 		version = v
 		if case let .array(ds) = cd[Keys.documents] {
 			let ds = try ds.map { d  throws(MdocValidationError) in try Document(cbor:d) }
