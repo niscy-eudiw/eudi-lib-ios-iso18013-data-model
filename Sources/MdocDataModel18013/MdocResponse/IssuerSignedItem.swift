@@ -64,7 +64,7 @@ extension CBOR: @retroactive CustomDebugStringConvertible {
 				case .unsignedInt(let i): return String(i)
 				case .boolean(let b): return String(b)
 		case .array(let a): return "[\(a.reduce("", { $0 + ($0.count > 0 ? "," : "") + " \($1.debugDescription)" }))]"
-		case .map(let m): return "{\(m.reduce("", { $0 + ($0.count > 0 ? "," : "") + " \($1.key.debugDescription): \($1.value.debugDescription)" }))}"
+		case .map(let map): return "{\(map.reduce("", { $0 + ($0.count > 0 ? "," : "") + " \($1.key.debugDescription): \($1.value.debugDescription)" }))}"
 		case .null: return "Null"
 		case .simple(let n): return String(n)
 				default: return "Other"

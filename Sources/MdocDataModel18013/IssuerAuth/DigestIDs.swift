@@ -44,10 +44,10 @@ extension DigestIDs: CBORDecodable {
 
 extension DigestIDs: CBOREncodable {
 	public func toCBOR(options: CBOROptions) -> CBOR {
-		var m = OrderedDictionary<CBOR, CBOR>()
+		var map = OrderedDictionary<CBOR, CBOR>()
 		for (k,v) in digestIDs {
-			m[.unsignedInt(k)] = .byteString(v)
+			map[.unsignedInt(k)] = .byteString(v)
 		}
-		return .map(m)
+		return .map(map)
 	}
 }

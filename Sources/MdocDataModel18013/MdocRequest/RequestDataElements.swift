@@ -43,9 +43,9 @@ extension RequestDataElements: CBORDecodable {
 
 extension RequestDataElements: CBOREncodable {
 	public func toCBOR(options: CBOROptions) -> CBOR {
-		let m = dataElements.map { (dei: DataElementIdentifier, ir: IntentToRetain) -> (CBOR, CBOR) in
+		let map = dataElements.map { (dei: DataElementIdentifier, ir: IntentToRetain) -> (CBOR, CBOR) in
 			(.utf8String(dei), .boolean(ir))
 		}
-		return .map(OrderedDictionary(m, uniquingKeysWith: { (d, _) in d }))
+		return .map(OrderedDictionary(map, uniquingKeysWith: { (d, _) in d }))
 	}
 }

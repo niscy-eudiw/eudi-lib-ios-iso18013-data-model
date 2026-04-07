@@ -44,7 +44,7 @@ public struct ZkSystemSpec: Sendable, Identifiable {
 
 extension ZkSystemSpec: CBORDecodable {
     public init(cbor: CBOR) throws(MdocValidationError) {
-        guard case let .map(m) = cbor else { throw .invalidCbor("ZkSystemSpec") }   
+        guard case let .map(m) = cbor else { throw .invalidCbor("ZkSystemSpec") }
         guard let systemValue = m[Keys.system] else { throw .missingField("ZkSystemSpec", Keys.system.rawValue) }
         guard case let .utf8String(sys) = systemValue else { throw .invalidCbor("ZkSystemSpec") }
         system = sys
@@ -138,21 +138,21 @@ extension Array where Element == ZkSystemSpec {
 
 extension ZkSystemSpec: CBOREncodable {
     public func toCBOR(options: CBOROptions) -> CBOR {
-        var m = OrderedDictionary<CBOR, CBOR>()
-        m[.utf8String(Keys.system.rawValue)] = .utf8String(system)
+        var map = OrderedDictionary<CBOR, CBOR>()
+        map[.utf8String(Keys.system.rawValue)] = .utf8String(system)
         // encode params
         var paramsMap = OrderedDictionary<CBOR, CBOR>()
         for (key, value) in params {
             paramsMap[.utf8String(key)] = value.toCBOR(options: options)
         }
-        m[.utf8String(Keys.params.rawValue)] = .map(paramsMap)
+        map[.utf8String(Keys.params.rawValue)] = .map(paramsMap)
         // encode extensions
         if let extensions {
             for (key, value) in extensions {
-                m[.utf8String(key)] = value
+                map[.utf8String(key)] = value
             }
         }
-        
-        return .map(m)
+
+        return .map(map)
     }
 }

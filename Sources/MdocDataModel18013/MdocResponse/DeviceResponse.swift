@@ -58,24 +58,24 @@ public struct DeviceResponse: Sendable {
 
 extension DeviceResponse: CBORDecodable {
 	public init(cbor: CBOR) throws(MdocValidationError) {
-		guard case .map(let cd) = cbor else { throw .invalidCbor("device response") }
-		guard case .utf8String(let v) = cd[Keys.version] else { throw .missingField("DeviceResponse", Keys.version.rawValue) }
-		try MdocVersion.validateDeviceVersion(v, component: "device response")
-		version = v
-		if case let .array(ds) = cd[Keys.documents] {
-			let ds = try ds.map { d  throws(MdocValidationError) in try Document(cbor:d) }
-			if ds.count > 0 { self.documents = ds } else { self.documents = nil }
+		guard case .map(let cborMap) = cbor else { throw .invalidCbor("device response") }
+		guard case .utf8String(let versionString) = cborMap[Keys.version] else { throw .missingField("DeviceResponse", Keys.version.rawValue) }
+		try MdocVersion.validateDeviceVersion(versionString, component: "device response")
+		version = versionString
+		if case let .array(documentCbors) = cborMap[Keys.documents] {
+			let parsedDocuments = try documentCbors.map { documentCbor  throws(MdocValidationError) in try Document(cbor: documentCbor) }
+			if parsedDocuments.count > 0 { self.documents = parsedDocuments } else { self.documents = nil }
 		} else { documents = nil }
-		if case let .array(zkd) = cd[Keys.zkDocuments] {
-			let zk = try zkd.map { d throws(MdocValidationError) in try ZkDocument(cbor:d) }
-			if zk.count > 0 { self.zkDocuments = zk } else { self.zkDocuments = nil }
+		if case let .array(zkDocumentCbors) = cborMap[Keys.zkDocuments] {
+			let parsedZkDocuments = try zkDocumentCbors.map { zkDocumentCbor throws(MdocValidationError) in try ZkDocument(cbor: zkDocumentCbor) }
+			if parsedZkDocuments.count > 0 { self.zkDocuments = parsedZkDocuments } else { self.zkDocuments = nil }
 		} else { zkDocuments = nil }
-		if case let .array(are) = cd[Keys.documentErrors] {
-			let de = try are.map { d throws(MdocValidationError) in try DocumentError(cbor:d) }
-			if de.count > 0 { self.documentErrors = de } else { self.documentErrors = nil }
+		if case let .array(documentErrorCbors) = cborMap[Keys.documentErrors] {
+			let parsedDocumentErrors = try documentErrorCbors.map { documentErrorCbor throws(MdocValidationError) in try DocumentError(cbor: documentErrorCbor) }
+			if parsedDocumentErrors.count > 0 { self.documentErrors = parsedDocumentErrors } else { self.documentErrors = nil }
 		}  else { documentErrors = nil }
-		guard case .unsignedInt(let st) = cd[Keys.status] else { throw .missingField("DeviceResponse", Keys.status.rawValue) }
-		status = st
+		guard case .unsignedInt(let statusValue) = cborMap[Keys.status] else { throw .missingField("DeviceResponse", Keys.status.rawValue) }
+		status = statusValue
 	}
 }
 
@@ -83,9 +83,9 @@ extension DeviceResponse: CBOREncodable {
 	public func toCBOR(options: CBOROptions) -> CBOR {
 		var cbor = OrderedDictionary<CBOR, CBOR>()
 		cbor[.utf8String(Keys.version.rawValue)] = .utf8String(version)
-		if let ds = documents { cbor[.utf8String(Keys.documents.rawValue)] = ds.toCBOR(options: options) }
-		if let zk = zkDocuments { cbor[.utf8String(Keys.zkDocuments.rawValue)] = .array(zk.map {$0.toCBOR(options: options)}) }
-		if let de = documentErrors { cbor[.utf8String(Keys.documentErrors.rawValue)] = .array(de.map {$0.toCBOR(options: options)}) }
+		if let documents { cbor[.utf8String(Keys.documents.rawValue)] = documents.toCBOR(options: options) }
+		if let zkDocuments { cbor[.utf8String(Keys.zkDocuments.rawValue)] = .array(zkDocuments.map { $0.toCBOR(options: options) }) }
+		if let documentErrors { cbor[.utf8String(Keys.documentErrors.rawValue)] = .array(documentErrors.map { $0.toCBOR(options: options) }) }
 		cbor[.utf8String(Keys.status.rawValue)] = .unsignedInt(status)
 		return .map(cbor)
 	}

@@ -78,15 +78,15 @@ extension DeviceRequest: CBOREncodable {
     public func encode(options: CBOROptions) -> [UInt8] { toCBOR(options: options).encode(options: options) }
 
 	public func toCBOR(options: CBOROptions) -> CBOR {
-		var m = OrderedDictionary<CBOR, CBOR>()
-        m[.utf8String(Keys.version.rawValue)] = .utf8String(version)
-        m[.utf8String(Keys.docRequests.rawValue)] = .array(docRequests.map { $0.toCBOR(options: options) })
+		var map = OrderedDictionary<CBOR, CBOR>()
+        map[.utf8String(Keys.version.rawValue)] = .utf8String(version)
+        map[.utf8String(Keys.docRequests.rawValue)] = .array(docRequests.map { $0.toCBOR(options: options) })
         if let deviceRequestInfo {
             let bytes = deviceRequestInfo.toCBOR(options: options).encode(options: options)
-            m[.utf8String(Keys.deviceRequestInfo.rawValue)] = .tagged(.encodedCBORDataItem, .byteString(bytes))
+            map[.utf8String(Keys.deviceRequestInfo.rawValue)] = .tagged(.encodedCBORDataItem, .byteString(bytes))
         }
-        if let readerAuthAll { m[.utf8String(Keys.readerAuthAll.rawValue)] = readerAuthAll.toCBOR(options: options) }
-		return .map(m)
+        if let readerAuthAll { map[.utf8String(Keys.readerAuthAll.rawValue)] = readerAuthAll.toCBOR(options: options) }
+		return .map(map)
 	}
 }
 

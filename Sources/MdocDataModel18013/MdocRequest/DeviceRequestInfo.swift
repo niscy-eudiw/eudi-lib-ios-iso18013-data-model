@@ -39,13 +39,13 @@ public struct UseCase: Sendable {
     public let documentSets: [DocumentSet]
     public let purposeHints: PurposeHints?
     public let extensions: OrderedDictionary<String, CBOR>?
-    
+
     enum Keys: String {
         case mandatory
         case documentSets
         case purposeHints
     }
-    
+
     public init(mandatory: Bool, documentSets: [DocumentSet], purposeHints: PurposeHints? = nil, extensions: OrderedDictionary<String, CBOR>? = nil) {
         self.mandatory = mandatory
         self.documentSets = documentSets
@@ -86,7 +86,7 @@ extension UseCase: CBORDecodable {
         } else {
             purposeHints = nil
         }
-        
+
         // Parse extensions (other keys in the map)
         var exts: OrderedDictionary<String, CBOR>? = nil
         for (key, value) in m {
@@ -104,9 +104,9 @@ extension UseCase: CBORDecodable {
 
 extension UseCase: CBOREncodable {
     public func toCBOR(options: CBOROptions) -> CBOR {
-        var m = OrderedDictionary<CBOR, CBOR>()
-        m[.utf8String(Keys.mandatory.rawValue)] = .boolean(mandatory)
-        m[.utf8String(Keys.documentSets.rawValue)] = .array(
+        var map = OrderedDictionary<CBOR, CBOR>()
+        map[.utf8String(Keys.mandatory.rawValue)] = .boolean(mandatory)
+        map[.utf8String(Keys.documentSets.rawValue)] = .array(
             documentSets.map { docSet in
                 .array(docSet.map { .unsignedInt(UInt64($0)) })
             }
@@ -116,14 +116,14 @@ extension UseCase: CBOREncodable {
             for (controllerId, code) in purposeHints {
                 hintsMap[.utf8String(controllerId)] = code >= 0 ? .unsignedInt(UInt64(code)) : .negativeInt(UInt64(-code - 1))
             }
-            m[.utf8String(Keys.purposeHints.rawValue)] = .map(hintsMap)
+            map[.utf8String(Keys.purposeHints.rawValue)] = .map(hintsMap)
         }
         if let extensions {
             for (key, value) in extensions {
-                m[.utf8String(key)] = value
+                map[.utf8String(key)] = value
             }
-        }    
-        return .map(m)
+        }
+        return .map(map)
     }
 }
 
@@ -131,11 +131,11 @@ extension UseCase: CBOREncodable {
 public struct DeviceRequestInfo: Sendable {
     public let useCases: [UseCase]?
     public let extensions: OrderedDictionary<String, CBOR>?
-    
+
     enum Keys: String {
         case useCases
     }
-    
+
     public init(useCases: [UseCase]? = nil, extensions: OrderedDictionary<String, CBOR>? = nil) {
         self.useCases = useCases
         self.extensions = extensions
@@ -144,7 +144,7 @@ public struct DeviceRequestInfo: Sendable {
 
 extension DeviceRequestInfo: CBORDecodable {
     public init(cbor: CBOR) throws(MdocValidationError) {
-        guard case let .map(m) = cbor else { throw .invalidCbor("DeviceRequestInfo") }    
+        guard case let .map(m) = cbor else { throw .invalidCbor("DeviceRequestInfo") }
         if let useCasesValue = m[Keys.useCases] {
             guard case let .array(arr) = useCasesValue else { throw .invalidCbor("DeviceRequestInfo") }
             useCases = try arr.map { u throws(MdocValidationError) in try UseCase(cbor: u) }
@@ -163,17 +163,17 @@ extension DeviceRequestInfo: CBORDecodable {
 
 extension DeviceRequestInfo: CBOREncodable {
     public func toCBOR(options: CBOROptions) -> CBOR {
-        var m = OrderedDictionary<CBOR, CBOR>()      
+        var map = OrderedDictionary<CBOR, CBOR>()
         if let useCases {
-            m[.utf8String(Keys.useCases.rawValue)] = .array(
+            map[.utf8String(Keys.useCases.rawValue)] = .array(
                 useCases.map { $0.toCBOR(options: options) }
             )
         }
         if let extensions {
             for (key, value) in extensions {
-                m[.utf8String(key)] = value
+                map[.utf8String(key)] = value
             }
         }
-        return .map(m)
+        return .map(map)
     }
 }

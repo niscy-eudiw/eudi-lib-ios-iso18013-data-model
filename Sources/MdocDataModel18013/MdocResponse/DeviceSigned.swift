@@ -68,11 +68,11 @@ extension DeviceNameSpaces: CBORDecodable {
 		guard case let .map(m) = cbor else { throw .invalidCbor("device signed") }
 		let dnsPairs = try m.map { (k: CBOR, v: CBOR) throws(MdocValidationError) -> (NameSpace, DeviceSignedItems)  in
 			guard case .utf8String(let ns) = k else { throw .invalidCbor("device signed") }
-			let dsi = try DeviceSignedItems(cbor: v)
-			return (ns,dsi)
+			let deviceSignedItems = try DeviceSignedItems(cbor: v)
+			return (ns, deviceSignedItems)
 		}
-		let dns: [NameSpace : DeviceSignedItems] = Dictionary(dnsPairs, uniquingKeysWith: { (first, _) in first })
-		deviceNameSpaces = dns
+		let dsignItemsMap: [NameSpace : DeviceSignedItems] = Dictionary(dnsPairs, uniquingKeysWith: { (first, _) in first })
+		deviceNameSpaces = dsignItemsMap
 	}
 }
 

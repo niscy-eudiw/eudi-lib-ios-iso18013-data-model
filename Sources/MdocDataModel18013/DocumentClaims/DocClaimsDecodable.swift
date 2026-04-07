@@ -91,9 +91,9 @@ extension DocClaimsDecodable {
 	public static func extractAgeOverValues(_ nameSpaces: [NameSpace: [IssuerSignedItem]], _ ageOverXX: inout [Int: Bool]) {
 		for (_, items) in nameSpaces {
 			for item in items {
-				let k = item.elementIdentifier
-				if !k.hasPrefix("age_over_") { continue }
-				if let age = Int(k.suffix(k.count - 9)) {
+				let elementIdentifier = item.elementIdentifier
+				if !elementIdentifier.hasPrefix("age_over_") { continue }
+				if let age = Int(elementIdentifier.suffix(elementIdentifier.count - 9)) {
 					let b: Bool? = item.getTypedValue()
 					if let b { ageOverXX[age] = b }
 				}

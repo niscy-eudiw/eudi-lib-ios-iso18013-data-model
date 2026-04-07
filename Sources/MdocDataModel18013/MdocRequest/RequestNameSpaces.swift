@@ -41,9 +41,9 @@ extension RequestNameSpaces: CBORDecodable {
 
 extension RequestNameSpaces: CBOREncodable {
 	public func toCBOR(options: CBOROptions) -> CBOR {
-		let m = nameSpaces.map { (ns: NameSpace, rde: RequestDataElements) -> (CBOR, CBOR) in
+		let map = nameSpaces.map { (ns: NameSpace, rde: RequestDataElements) -> (CBOR, CBOR) in
 			(.utf8String(ns), rde.toCBOR(options: options))
 		}
-		return .map(OrderedDictionary(m, uniquingKeysWith: { (d, _) in d }))
+		return .map(OrderedDictionary(map, uniquingKeysWith: { (d, _) in d }))
 	}
 }

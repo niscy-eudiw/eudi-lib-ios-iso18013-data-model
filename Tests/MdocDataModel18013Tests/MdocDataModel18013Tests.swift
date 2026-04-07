@@ -21,8 +21,8 @@ import OrderedCollections
 @testable import MdocDataModel18013
 
 struct MdocDataModel18013Tests {
-	static let pkb64 = "pQECIAEhWCBoHIiBQnDRMLUT4yOLqJ1l8mrfNIgrjNnFq4RyZgxSmiJYIGD/Sabu6GejaR4eTiym1JkyjnBNcJ+f59pN+lCEyhVyI1ggC6EPCKyGci++LGWUX3fXpPFW6pYO8pyyKLMKs1qF0jo="
-    static let pk = CoseKeyPrivate(p256data: pkb64, privateKeyId: "someKeyId")!
+	static let privateKeyBase64 = "pQECIAEhWCBoHIiBQnDRMLUT4yOLqJ1l8mrfNIgrjNnFq4RyZgxSmiJYIGD/Sabu6GejaR4eTiym1JkyjnBNcJ+f59pN+lCEyhVyI1ggC6EPCKyGci++LGWUX3fXpPFW6pYO8pyyKLMKs1qF0jo="
+    static let privateKey = CoseKeyPrivate(p256data: privateKeyBase64, privateKeyId: "someKeyId")!
 
     @Test func basicExample() throws {
         // Swift Testing Documentation

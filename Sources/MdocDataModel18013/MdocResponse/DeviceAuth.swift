@@ -34,13 +34,13 @@ public struct DeviceAuth: Sendable {
 extension DeviceAuth: CBORDecodable {
 	public init(cbor: CBOR) throws(MdocValidationError) {
 		guard case let .map(m) = cbor else { throw .invalidCbor("Device authentication must be a map") }
-		let cs = m[Keys.deviceSignature]
-		let cm = m[Keys.deviceMac]
-		switch (cs, cm) {
-		case let (cs?, nil):
-			if let ds = Cose(type: .sign1, cbor: cs) { coseMacOrSignature = ds } else { throw .invalidCbor("Device authentication invalid DeviceSignature") }
-		case let (nil, cm?):
-			if let dm = Cose(type: .mac0, cbor: cm) { coseMacOrSignature = dm } else { throw .invalidCbor("Device authentication invalid DeviceMac") }
+		let deviceSignature = m[Keys.deviceSignature]
+		let deviceMac = m[Keys.deviceMac]
+		switch (deviceSignature, deviceMac) {
+		case let (coseDs?, nil):
+			if let dsign = Cose(type: .sign1, cbor: coseDs) { coseMacOrSignature = dsign } else { throw .invalidCbor("Device authentication invalid DeviceSignature") }
+		case let (nil, coseDm?):
+			if let dmac = Cose(type: .mac0, cbor: coseDm) { coseMacOrSignature = dmac } else { throw .invalidCbor("Device authentication invalid DeviceMac") }
 		case (.some, .some):
 			throw .invalidCbor("DeviceMac and DeviceSignature cannot both be present")
 		case (nil, nil):
@@ -51,13 +51,13 @@ extension DeviceAuth: CBORDecodable {
 
 extension DeviceAuth: CBOREncodable {
 	public func toCBOR(options: CBOROptions) -> CBOR {
-		var m = OrderedDictionary<CBOR, CBOR>()
+		var map = OrderedDictionary<CBOR, CBOR>()
 		let cborMS = coseMacOrSignature.toCBOR(options: options)
 		switch coseMacOrSignature.type {
-		case .sign1: m[.utf8String(Keys.deviceSignature.rawValue)] = cborMS
-		case .mac0: m[.utf8String(Keys.deviceMac.rawValue)] = cborMS
+		case .sign1: map[.utf8String(Keys.deviceSignature.rawValue)] = cborMS
+		case .mac0: map[.utf8String(Keys.deviceMac.rawValue)] = cborMS
 		}
-		return CBOR.map(m)
+		return CBOR.map(map)
 	}
 }
 //  MacAlgorithm.swift

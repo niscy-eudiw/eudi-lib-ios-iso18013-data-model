@@ -43,11 +43,11 @@ extension ValueDigests: CBORDecodable {
 
 extension ValueDigests: CBOREncodable {
 	public func toCBOR(options: CBOROptions) -> CBOR {
-		var m = OrderedDictionary<CBOR, CBOR>()
+		var map = OrderedDictionary<CBOR, CBOR>()
 		for (k,v) in valueDigests {
-			m[.utf8String(k)] = v.toCBOR(options: CBOROptions())
+			map[.utf8String(k)] = v.toCBOR(options: CBOROptions())
 		}
-		return .map(m)
+		return .map(map)
 	}
 }
 

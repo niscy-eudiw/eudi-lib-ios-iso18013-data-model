@@ -68,10 +68,10 @@ public struct DeviceEngagement: Sendable {
 	}
 
     public mutating func makePrivateKey(crv: CoseEcCurve, secureArea: any SecureArea) async throws {
-        var pk = CoseKeyPrivate(secureArea: secureArea)
-        try await pk.makeKey(curve: crv)
-        privateKey = pk
-        security = Security(deviceKey: pk.key)
+		var generatedPrivateKey = CoseKeyPrivate(secureArea: secureArea)
+		try await generatedPrivateKey.makeKey(curve: crv)
+		privateKey = generatedPrivateKey
+		security = Security(deviceKey: generatedPrivateKey.key)
     }
 
 	public var isBleServer: Bool? {

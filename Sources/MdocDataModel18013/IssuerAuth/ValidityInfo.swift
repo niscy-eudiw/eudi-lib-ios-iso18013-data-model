@@ -62,12 +62,12 @@ extension ValidityInfo: CBORDecodable {
 
 extension ValidityInfo: CBOREncodable {
 	public func toCBOR(options: CBOROptions) -> CBOR {
-		var m = OrderedDictionary<CBOR, CBOR>()
-		m[.utf8String(Keys.signed.rawValue)] = .tagged(.standardDateTimeString, .utf8String(signed))
-		m[.utf8String(Keys.validFrom.rawValue)] = .tagged(.standardDateTimeString, .utf8String(validFrom))
-		m[.utf8String(Keys.validUntil.rawValue)] = .tagged(.standardDateTimeString, .utf8String(validUntil))
-		if let expectedUpdate { m[.utf8String(Keys.expectedUpdate.rawValue)] = .tagged(.standardDateTimeString, .utf8String(expectedUpdate)) }
-		return .map(m)
+		var map = OrderedDictionary<CBOR, CBOR>()
+		map[.utf8String(Keys.signed.rawValue)] = .tagged(.standardDateTimeString, .utf8String(signed))
+		map[.utf8String(Keys.validFrom.rawValue)] = .tagged(.standardDateTimeString, .utf8String(validFrom))
+		map[.utf8String(Keys.validUntil.rawValue)] = .tagged(.standardDateTimeString, .utf8String(validUntil))
+		if let expectedUpdate { map[.utf8String(Keys.expectedUpdate.rawValue)] = .tagged(.standardDateTimeString, .utf8String(expectedUpdate)) }
+		return .map(map)
 	}
 }
 

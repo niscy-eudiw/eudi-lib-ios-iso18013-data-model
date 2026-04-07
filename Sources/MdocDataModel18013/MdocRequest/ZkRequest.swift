@@ -22,11 +22,11 @@ import OrderedCollections
 public struct ZkRequest: Sendable {
     public let systemSpecs: [ZkSystemSpec]
     public let extensions: OrderedDictionary<String, CBOR>?
-    
+
     enum Keys: String {
         case systemSpecs
     }
-    
+
     public init(systemSpecs: [ZkSystemSpec], extensions: OrderedDictionary<String, CBOR>? = nil) {
         self.systemSpecs = systemSpecs
         self.extensions = extensions
@@ -58,17 +58,17 @@ extension ZkRequest: CBORDecodable {
 
 extension ZkRequest: CBOREncodable {
     public func toCBOR(options: CBOROptions) -> CBOR {
-        var m = OrderedDictionary<CBOR, CBOR>()
+        var map = OrderedDictionary<CBOR, CBOR>()
         // encode systemSpecs
-        m[.utf8String(Keys.systemSpecs.rawValue)] = .array(
+        map[.utf8String(Keys.systemSpecs.rawValue)] = .array(
             systemSpecs.map { $0.toCBOR(options: options) }
         )
         // encode extensions
         if let extensions {
             for (key, value) in extensions {
-                m[.utf8String(key)] = value
+                map[.utf8String(key)] = value
             }
-        }   
-        return .map(m)
+        }
+        return .map(map)
     }
 }
