@@ -63,16 +63,19 @@ extension DeviceResponse: CBORDecodable {
 		try MdocVersion.validateDeviceVersion(versionString, component: "device response")
 		version = versionString
 		if case let .array(documentCbors) = cborMap[Keys.documents] {
+			guard !documentCbors.isEmpty else { throw .invalidCbor("DeviceResponse.documents empty array") }
 			let parsedDocuments = try documentCbors.map { documentCbor  throws(MdocValidationError) in try Document(cbor: documentCbor) }
-			if parsedDocuments.count > 0 { self.documents = parsedDocuments } else { self.documents = nil }
+			self.documents = parsedDocuments
 		} else { documents = nil }
 		if case let .array(zkDocumentCbors) = cborMap[Keys.zkDocuments] {
+			guard !zkDocumentCbors.isEmpty else { throw .invalidCbor("DeviceResponse.zkDocuments empty array") }
 			let parsedZkDocuments = try zkDocumentCbors.map { zkDocumentCbor throws(MdocValidationError) in try ZkDocument(cbor: zkDocumentCbor) }
-			if parsedZkDocuments.count > 0 { self.zkDocuments = parsedZkDocuments } else { self.zkDocuments = nil }
+			self.zkDocuments = parsedZkDocuments
 		} else { zkDocuments = nil }
 		if case let .array(documentErrorCbors) = cborMap[Keys.documentErrors] {
+			guard !documentErrorCbors.isEmpty else { throw .invalidCbor("DeviceResponse.documentErrors empty array") }
 			let parsedDocumentErrors = try documentErrorCbors.map { documentErrorCbor throws(MdocValidationError) in try DocumentError(cbor: documentErrorCbor) }
-			if parsedDocumentErrors.count > 0 { self.documentErrors = parsedDocumentErrors } else { self.documentErrors = nil }
+			self.documentErrors = parsedDocumentErrors
 		}  else { documentErrors = nil }
 		guard case .unsignedInt(let statusValue) = cborMap[Keys.status] else { throw .missingField("DeviceResponse", Keys.status.rawValue) }
 		status = statusValue

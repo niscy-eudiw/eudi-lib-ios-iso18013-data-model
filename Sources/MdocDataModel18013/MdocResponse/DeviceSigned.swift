@@ -90,7 +90,7 @@ extension DeviceSignedItems: CBORDecodable {
 			return (dei,v)
 		}
 		let dsi = Dictionary(dsiPairs, uniquingKeysWith: { (first, _) in first })
-		if dsi.count == 0 { throw .invalidCbor("device signed") }
+		guard !dsi.isEmpty else { throw .invalidCbor("device signed empty array") }
 		deviceSignedItems = dsi
 	}
 }
