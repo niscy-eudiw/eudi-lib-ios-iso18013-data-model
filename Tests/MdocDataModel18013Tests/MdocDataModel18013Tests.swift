@@ -97,6 +97,16 @@ struct MdocDataModel18013Tests {
 		}
 	}
 
+	@Test func decodeDeviceRequestRejectsEmptyReaderAuthAllArray() throws {
+		let cbor = try mutatedTopLevelMapCBOR(from: Self.AnnexdTestData.d411.bytes) { map in
+			map[.utf8String("readerAuthAll")] = .array([])
+		}
+
+		#expect(throws: MdocValidationError.self) {
+			try DeviceRequest(cbor: cbor)
+		}
+	}
+
 	@Test func decodeSampleDataResponse() throws {
 		let eudiSampleData = Data(name: "EUDI_sample_data", ext: "json", from: Bundle.module)!
 		let sr = try #require(eudiSampleData.decodeJSON(type: SignUpResponse.self))
@@ -243,6 +253,38 @@ struct MdocDataModel18013Tests {
 		}
 	}
 
+	@Test func decodeDeviceResponseRejectsEmptyDocumentsArray() throws {
+		let cbor = try mutatedTopLevelMapCBOR(from: Self.AnnexdTestData.d412.bytes) { map in
+			map[.utf8String("documents")] = .array([])
+		}
+
+		#expect(throws: MdocValidationError.self) {
+			try DeviceResponse(cbor: cbor)
+		}
+	}
+
+	@Test func decodeDeviceResponseRejectsEmptyDocumentErrorsArray() throws {
+		let cbor = try mutatedTopLevelMapCBOR(from: Self.AnnexdTestData.d412.bytes) { map in
+			map[.utf8String("documentErrors")] = .array([])
+		}
+
+		#expect(throws: MdocValidationError.self) {
+			try DeviceResponse(cbor: cbor)
+		}
+	}
+
+	@Test func decodeIssuerSignedRejectsEmptyNamespaceItemsArray() throws {
+		let cbor = try mutatedIssuerSignedCBOR(from: Self.AnnexdTestData.d412.bytes) { issuerSignedMap in
+			issuerSignedMap[.utf8String("nameSpaces")] = .map([
+				.utf8String(IsoMdlModel.isoNamespace): .array([])
+			])
+		}
+
+		#expect(throws: MdocValidationError.self) {
+			try IssuerSigned(cbor: cbor)
+		}
+	}
+
 	@Test func encodeDeviceResponse() throws {
 		let cborIn = try #require(try CBOR.decode(AnnexdTestData.d412.bytes))
 		let dr = try DeviceResponse(cbor: cborIn)
@@ -373,6 +415,27 @@ struct MdocDataModel18013Tests {
 		#expect(spec.extensions == nil)
 	}
 
+	@Test func decodeUseCaseRejectsEmptyDocumentSet() throws {
+		let cbor = CBOR.map([
+			.utf8String("mandatory"): .boolean(true),
+			.utf8String("documentSets"): .array([.array([])])
+		])
+
+		#expect(throws: MdocValidationError.self) {
+			try UseCase(cbor: cbor)
+		}
+	}
+
+	@Test func decodeDeviceRequestInfoRejectsEmptyUseCasesArray() throws {
+		let cbor = CBOR.map([
+			.utf8String("useCases"): .array([])
+		])
+
+		#expect(throws: MdocValidationError.self) {
+			try DeviceRequestInfo(cbor: cbor)
+		}
+	}
+
 	private func unsupportedVersionCBOR(
 		from bytes: [UInt8],
 		key: CBOR,
@@ -384,5 +447,33 @@ struct MdocDataModel18013Tests {
 		}
 		map[key] = .utf8String(version)
 		return .map(map)
+	}
+
+	private func mutatedTopLevelMapCBOR(
+		from bytes: [UInt8],
+		mutate: (inout OrderedDictionary<CBOR, CBOR>) throws -> Void
+	) throws -> CBOR {
+		let cbor = try #require(try CBOR.decode(bytes))
+		guard case .map(var map) = cbor else {
+			throw MdocValidationError.invalidCbor("test data")
+		}
+		try mutate(&map)
+		return .map(map)
+	}
+
+	private func mutatedIssuerSignedCBOR(
+		from responseBytes: [UInt8],
+		mutate: (inout OrderedDictionary<CBOR, CBOR>) throws -> Void
+	) throws -> CBOR {
+		let responseCbor = try #require(try CBOR.decode(responseBytes))
+		guard case .map(let responseMap) = responseCbor,
+			  case let .array(documents)? = responseMap[.utf8String("documents")],
+			  let firstDocument = documents.first,
+			  case .map(let documentMap) = firstDocument,
+			  case .map(var issuerSignedMap) = documentMap[.utf8String("issuerSigned")] else {
+			throw MdocValidationError.invalidCbor("test data")
+		}
+		try mutate(&issuerSignedMap)
+		return .map(issuerSignedMap)
 	}
 }

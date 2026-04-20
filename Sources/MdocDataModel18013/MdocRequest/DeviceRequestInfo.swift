@@ -62,8 +62,10 @@ extension UseCase: CBORDecodable {
         mandatory = b
         guard let docSetsValue = m[Keys.documentSets] else { throw .missingField("UseCase", Keys.documentSets.rawValue) }
         guard case let .array(arr) = docSetsValue else { throw .invalidCbor("UseCase") }
+        guard !arr.isEmpty else { throw .invalidCbor("UseCase.documentSets empty array") }
         documentSets = try arr.map { cbor  throws(MdocValidationError) in
             guard case let .array(docArray) = cbor else { throw MdocValidationError.invalidCbor("DocumentSet") }
+            guard !docArray.isEmpty else { throw MdocValidationError.invalidCbor("DocumentSet") }
             return try docArray.map { cborItem  throws(MdocValidationError) in
                 guard case let .unsignedInt(id) = cborItem else { throw MdocValidationError.invalidCbor("DocRequestID") }
                 return UInt(id)
@@ -147,6 +149,7 @@ extension DeviceRequestInfo: CBORDecodable {
         guard case let .map(m) = cbor else { throw .invalidCbor("DeviceRequestInfo") }
         if let useCasesValue = m[Keys.useCases] {
             guard case let .array(arr) = useCasesValue else { throw .invalidCbor("DeviceRequestInfo") }
+            guard !arr.isEmpty else { throw .invalidCbor("DeviceRequestInfo.useCases") }
             useCases = try arr.map { u throws(MdocValidationError) in try UseCase(cbor: u) }
         } else { useCases = nil }
         // Parse extensions (other keys in the map)

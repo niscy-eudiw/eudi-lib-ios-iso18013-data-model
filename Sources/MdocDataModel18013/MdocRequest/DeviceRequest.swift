@@ -67,6 +67,7 @@ extension DeviceRequest: CBORDecodable {
             deviceRequestInfo = try DeviceRequestInfo(cbor: decoded)
         } else { deviceRequestInfo = nil }
         if case let .array(ra) = m[Keys.readerAuthAll] {
+            guard !ra.isEmpty else { throw .invalidCbor("readerAuthAll array is empty") }
             readerAuthAllRawCBOR = ra
             do { readerAuthAll = try ra.map { try ReaderAuth(cbor: $0) } } catch { throw .invalidCbor("readerAuthAll") }
         }
