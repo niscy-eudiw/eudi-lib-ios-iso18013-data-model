@@ -14,7 +14,7 @@ open class DocClaimsModel: DocClaimsDecodable, @unchecked Sendable, ObservableOb
     public let validFrom: Date?
     internal let _validUntil: Date?
     public var validUntil: Date? { if let uc = credentialsUsageCounts, uc.remaining <= 0 { return nil } else { return _validUntil } }
-    public let statusIdentifier: StatusIdentifier?
+    public let statusList: StatusList?
     private let credentialsUsageCountsLock: OSAllocatedUnfairLock<CredentialsUsageCounts?>
     /// This may be updated after initialization. Access to this property is synchronized to prevent concurrent read/write data races.
     public var credentialsUsageCounts: CredentialsUsageCounts? {
@@ -48,7 +48,7 @@ open class DocClaimsModel: DocClaimsDecodable, @unchecked Sendable, ObservableOb
         self.configurationIdentifier = configuration.configurationIdentifier
         self.validFrom = configuration.validFrom
         self._validUntil = configuration.validUntil
-        self.statusIdentifier = configuration.statusIdentifier
+        self.statusList = configuration.statusList
         self.secureAreaName = configuration.secureAreaName
         self.credentialsUsageCountsLock = OSAllocatedUnfairLock(initialState: configuration.credentialsUsageCounts)
         self.credentialPolicy = configuration.credentialPolicy
@@ -71,7 +71,7 @@ open class DocClaimsModel: DocClaimsDecodable, @unchecked Sendable, ObservableOb
     self.configurationIdentifier = configuration.configurationIdentifier
     self.validFrom = configuration.validFrom
     self._validUntil = configuration.validUntil
-    self.statusIdentifier = configuration.statusIdentifier
+    self.statusList = configuration.statusList
     self.secureAreaName = configuration.secureAreaName
     self.credentialsUsageCountsLock = OSAllocatedUnfairLock(initialState: configuration.credentialsUsageCounts)
     self.credentialPolicy = configuration.credentialPolicy
@@ -115,7 +115,7 @@ extension DocClaimsModel {
             configurationIdentifier: nil,
             validFrom: nil,
             validUntil: nil,
-            statusIdentifier: nil,
+            statusList: nil,
             credentialsUsageCounts: nil,
             credentialPolicy: .oneTimeUse,
             secureAreaName: nil,

@@ -168,7 +168,7 @@ public final class IsoMdlModel: DocClaimsModel, @unchecked Sendable {
 				configurationIdentifier: configuration.configurationIdentifier,
 				validFrom: configuration.validFrom,
 				validUntil: configuration.validUntil,
-				statusIdentifier: configuration.statusIdentifier,
+				statusList: configuration.statusList,
 				credentialsUsageCounts: configuration.credentialsUsageCounts,
 				credentialPolicy: configuration.credentialPolicy,
 				secureAreaName: configuration.secureAreaName,
