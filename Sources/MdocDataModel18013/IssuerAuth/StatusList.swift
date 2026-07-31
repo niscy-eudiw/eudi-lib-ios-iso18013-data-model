@@ -16,8 +16,8 @@ limitations under the License.
 import Foundation
 import SwiftCBOR
 
-public struct Status: Decodable {
-	let statusList: StatusList
+public struct Status: Decodable, Sendable {
+	public let statusList: StatusList
 
 	enum CodingKeys: String, CodingKey {
 		case statusList = "status_list"
