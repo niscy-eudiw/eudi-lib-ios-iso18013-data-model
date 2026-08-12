@@ -51,18 +51,18 @@ extension String {
 	}
 
     public func convertToLocalDate() -> Date? {
-          let formatter = ISO8601DateFormatter()
-          if contains(".") {
-              formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-          }
-          // Parse the string to Date (UTC)
-          guard let date = formatter.date(from: self) else {
-              return nil
-          }
-          // The Date object itself doesn't have a timezone - it's just a point in time
-          // To display it in local timezone, you would use another formatter
-          return date
-      }
+        let formatter = ISO8601DateFormatter()
+        if contains(".") {
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        }
+        // Parse the string to Date (UTC)
+        guard let date = formatter.date(from: self) else {
+            return nil
+        }
+        // The Date object itself doesn't have a timezone - it's just a point in time
+        // To display it in local timezone, you would use another formatter
+        return date
+    }
 
 	public func toBytes() -> [UInt8]? {
 		let length = count
