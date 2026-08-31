@@ -79,7 +79,7 @@ public actor InMemoryP256SecureArea: SecureArea {
     }
 
     public func getKeyBatchInfo(id: String) throws -> MdocDataModel18013.KeyBatchInfo {
-        KeyBatchInfo(secureAreaName: Self.name, crv: .P256, usedCounts: [0], credentialPolicy: .rotateUse)
+        KeyBatchInfo(keyOptions: KeyOptions(curve: .P256, secureAreaName: Self.name), usedCounts: [0], credentialPolicy: .rotateUse)
     }
 }
 
