@@ -87,6 +87,8 @@ extension SecAccessControlCreateFlags: @retroactive Codable {}
 /// combination of keychain flags through verbatim, for example a biometry constraint with a passcode fallback:
 /// `.custom([.biometryCurrentSet, .or, .devicePasscode])`.
 public enum KeyAccessControl: Codable, Equatable, Sendable {
+    // no access control
+    case empty
     /// Require user presence policy using biometry or Passcode
     case requireUserPresence
     /// Require any enrolled biometry, without allowing passcode fallback
@@ -109,6 +111,7 @@ public enum KeyAccessControl: Codable, Equatable, Sendable {
     /// flags to use for the kSecAttrAccessControl attribute
     public var flags: SecAccessControlCreateFlags {
         switch self {
+        case .empty: []
         case .requireUserPresence: SecAccessControlCreateFlags.userPresence
         case .requireBiometryAny: SecAccessControlCreateFlags.biometryAny
         case .requireBiometryCurrentSet: SecAccessControlCreateFlags.biometryCurrentSet
