@@ -17,7 +17,7 @@ limitations under the License.
 import Foundation
 
 /// Key options
-public struct KeyOptions: Codable, Sendable {
+public struct KeyOptions: Codable, Sendable, Equatable {
     public init(curve: CoseEcCurve = .P256, secureAreaName: String? = nil, accessProtection: KeyAccessProtection? = nil, accessControl: KeyAccessControl? = nil, keyPurposes: [KeyPurpose]? = KeyPurpose.allCases, additionalOptions: Data? = nil) {
         self.curve = curve
         self.secureAreaName = secureAreaName
