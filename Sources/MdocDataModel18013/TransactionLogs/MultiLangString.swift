@@ -18,8 +18,8 @@ import Foundation
 
 /// A piece of text in one language. Use a list of these for multi-language text.
 public struct MultiLangString: Codable, Equatable, Sendable {
-    public init(lang: String, content: String) {
-        self.lang = lang
+    public init(lang: String = "en", content: String) {
+        self.lang = lang.isEmpty ? "en" : lang
         self.content = content
     }
 
@@ -36,12 +36,13 @@ public struct MultiLangString: Codable, Equatable, Sendable {
     /// Some TS10 examples render this as a bare string instead of a `{lang, content}` object.
     public init(from decoder: Decoder) throws {
         if let container = try? decoder.singleValueContainer(), let content = try? container.decode(String.self) {
-            self.lang = ""
+            self.lang = "en"
             self.content = content
             return
         }
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.lang = try container.decode(String.self, forKey: .lang)
+        let lang = try container.decodeIfPresent(String.self, forKey: .lang) ?? "en"
+        self.lang = lang.isEmpty ? "en" : lang
         self.content = try container.decode(String.self, forKey: .content)
     }
 }
