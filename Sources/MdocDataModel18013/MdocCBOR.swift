@@ -1,4 +1,6 @@
+import Foundation
 import SwiftCBOR
+import OrderedCollections
 
 /// The byte boundary for externally supplied CBOR, including embedded CBOR.
 enum MdocCBOR {
@@ -7,6 +9,7 @@ enum MdocCBOR {
     static func decode(_ bytes: [UInt8]) throws -> CBOR? {
         var validator = StructureValidator(bytes: bytes)
         try validator.item(depth: 0)
+        guard validator.offset == bytes.count else { throw MdocValidationError.invalidCbor("trailing CBOR data") }
         return try CBOR.decode(bytes, options: CBOROptions(maximumDepth: maximumDepth))
     }
 
@@ -29,6 +32,42 @@ enum MdocCBOR {
             return result
         }
 
+        mutating func mapPair(depth: Int, keys: inout Set<[UInt8]>) throws {
+            let start = offset
+            try item(depth: depth)
+            // Decode only the already bounded, complete key. Compare semantic encodings,
+            // so indefinite strings and nonminimal integer widths cannot hide duplicates.
+            guard let key = try CBOR.decode(Array(bytes[start..<offset]), options: CBOROptions(maximumDepth: MdocCBOR.maximumDepth)) else {
+                throw MdocValidationError.invalidCbor("invalid CBOR map key")
+            }
+            guard keys.insert(normalizedKey(key).encode()).inserted else {
+                throw MdocValidationError.invalidCbor("duplicate CBOR map key")
+            }
+            try item(depth: depth)
+        }
+
+        func normalizedKey(_ value: CBOR) -> CBOR {
+            switch value {
+            case .half(let number), .float(let number):
+                return normalizedKey(.double(Double(number)))
+            case .double(let number):
+                return .double(number.isNaN ? .nan : (number == 0 ? 0 : number))
+            case .date(let date):
+                // SwiftCBOR's date encoder narrows to Int64/Int32 and may trap.
+                return .tagged(CBOR.Tag(rawValue: 1), normalizedKey(.double(date.timeIntervalSince1970)))
+            case .utf8String(let text): return .utf8String(text.precomposedStringWithCanonicalMapping)
+            case .array(let values): return .array(values.map(normalizedKey))
+            case .map(let map):
+                let entries = map.map { (normalizedKey($0.key), normalizedKey($0.value)) }
+                    .sorted { $0.0.encode().lexicographicallyPrecedes($1.0.encode()) }
+                var normalized = OrderedDictionary<CBOR, CBOR>()
+                for (key, value) in entries { normalized[key] = value }
+                return .map(normalized)
+            case .tagged(let tag, let child): return .tagged(tag, normalizedKey(child))
+            default: return value
+            }
+        }
+
         mutating func item(depth: Int) throws {
             guard depth <= MdocCBOR.maximumDepth else { throw MdocValidationError.invalidCbor("CBOR nesting limit") }
             let initial = try byte()
@@ -36,6 +75,7 @@ enum MdocCBOR {
             let info = initial & 31
             if info == 31 {
                 guard (2...5).contains(major) else { throw MdocValidationError.invalidCbor("unexpected CBOR break") }
+                var mapKeys = Set<[UInt8]>()
                 while true {
                     guard offset < bytes.count else { throw MdocValidationError.invalidCbor("unterminated CBOR") }
                     if bytes[offset] == 0xff { offset += 1; break }
@@ -44,8 +84,8 @@ enum MdocCBOR {
                             throw MdocValidationError.invalidCbor("invalid indefinite string chunk")
                         }
                     }
-                    try item(depth: depth + 1)
-                    if major == 5 { try item(depth: depth + 1) }
+                    if major == 5 { try mapPair(depth: depth + 1, keys: &mapKeys) }
+                    else { try item(depth: depth + 1) }
                 }
                 return
             }
@@ -61,9 +101,10 @@ enum MdocCBOR {
                 guard count <= UInt64((bytes.count - offset) / width) else {
                     throw MdocValidationError.invalidCbor("CBOR container exceeds remaining input")
                 }
+                var mapKeys = Set<[UInt8]>()
                 for _ in 0..<Int(count) {
-                    try item(depth: depth + 1)
-                    if major == 5 { try item(depth: depth + 1) }
+                    if major == 5 { try mapPair(depth: depth + 1, keys: &mapKeys) }
+                    else { try item(depth: depth + 1) }
                 }
             case 6: try item(depth: depth + 1)
             default: throw MdocValidationError.invalidCbor("invalid CBOR type")

@@ -18,6 +18,7 @@ limitations under the License.
 
 import Foundation
 import SwiftCBOR
+import OrderedCollections
 //
 
 extension Cose {
@@ -91,11 +92,22 @@ extension Cose {
 		/// Initialize from CBOR
 		/// - Parameter cbor: CBOR representation of the header
 		public init?(fromBytestring cbor: CBOR){
-			guard let cborMap = cbor.decodeBytestring()?.asMap(),
-				  let alg = cborMap[Headers.algorithm]?.asUInt64() else {
+            let cborMap: OrderedDictionary<CBOR, CBOR>
+            if case let .map(map) = cbor {
+                cborMap = map
+            } else if case let .byteString(bytes) = cbor {
+                // COSE permits an empty protected header bstr.
+                if bytes.isEmpty {
+                    self.init(alg: nil, isNegativeAlg: nil, keyId: nil, type: nil, rawHeader: cbor)
+                    return
+                }
+                guard let map = cbor.decodeBytestring()?.asMap() else { return nil }
+                cborMap = map
+            } else { return nil }
+            guard let alg = cborMap[Headers.algorithm]?.asUInt64() else {
                 self.init(alg: nil, isNegativeAlg: nil, keyId: nil, type: nil, rawHeader: cbor)
-				return
-			}
+                return
+            }
             let type = cborMap[Headers.typ]?.asString()
             self.init(alg: alg, isNegativeAlg: nil, keyId: cborMap[Headers.keyId]?.asBytes(), type: type, rawHeader: cbor)
 		}
@@ -166,6 +178,7 @@ extension Cose {
 		guard let coseList = cbor.asList(), let protectedHeader = CoseHeader(fromBytestring: coseList[0]),
 			  let signature = coseList[3].asBytes() else { return nil }
 
+        guard case .byteString = coseList[0], case .map = coseList[1] else { return nil }
 		self.protectedHeader = protectedHeader
 		self.unprotectedHeader = CoseHeader(fromBytestring: coseList[1]) ?? nil
 		self.payload = coseList[2]
