@@ -29,6 +29,11 @@ struct ReaderAuthAllTests {
             #expect(parsed.readerAuthAll?.first?.x5chain == [[1]])
         }
     }
+    @Test func attachedCwtPayloadStillParses() throws {
+        guard case var .array(fields) = signature() else { return }
+        fields[2] = .byteString(CBOR.map([1: .utf8String("issuer")]).encode())
+        #expect(try ReaderAuth(cbor: .array(fields)).coseSign1.payload == fields[2])
+    }
     @Test func malformedAuthAllCannotBecomeAbsentOrTrap() {
         let malformed: [CBOR] = [.null, .map([:]), .array([]), .array([.array([])]), .array([.array([.byteString([])])]),
             .array([signature(chain: .array([.byteString([1]), .boolean(true)]))]),

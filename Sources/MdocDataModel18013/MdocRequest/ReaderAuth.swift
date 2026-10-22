@@ -30,7 +30,7 @@ extension ReaderAuth: CBORDecodable {
         // Preflight before Cose.init, which indexes the four COSE_Sign1 fields.
         guard case let .array(fields) = cbor, fields.count == 4,
               case let .byteString(protectedBytes) = fields[0],
-              case let .map(unprotected) = fields[1], fields[2] == .null,
+              case let .map(unprotected) = fields[1],
               case .byteString = fields[3],
               let decoded = try? CBOR.decode(protectedBytes), case let .map(protected) = decoded,
               case .negativeInt = protected[.unsignedInt(1)],
