@@ -45,6 +45,8 @@ public struct DeviceEngagement: Sendable {
 	var version: String = Self.versionImpl
 	var security: Security!
 	public var originInfos: [OriginInfoWebsite]? = nil
+    /// Set only when the holder implements ReaderAuthenticationAll verification.
+    public var readerAuthAllSupport: Bool = false
 	public var deviceRetrievalMethods: [DeviceRetrievalMethod]? = nil
 	public var serverRetrievalOptions: ServerRetrievalOptions? = nil
 	var rfus: [String]?
@@ -58,7 +60,8 @@ public struct DeviceEngagement: Sendable {
 	///    - supportsCentralClientMode: true if the holder supports BLE central client mode
 	///    - supportsPeripheralServerMode: true if the holder supports BLE peripheral server mode
 	///    - crv: The EC curve type used in the mdoc ephemeral private key
-    public init?(supportsCentralClientMode: Bool, supportsPeripheralServerMode: Bool, rfus: [String]? = nil) {
+    public init?(supportsCentralClientMode: Bool, supportsPeripheralServerMode: Bool, rfus: [String]? = nil, readerAuthAllSupport: Bool = false) {
+        self.readerAuthAllSupport = readerAuthAllSupport
 		self.rfus = rfus
 		let uuid = UUID()
 		guard supportsCentralClientMode || supportsPeripheralServerMode else { return nil }
@@ -121,10 +124,13 @@ public struct DeviceEngagement: Sendable {
 
 extension DeviceEngagement: CBOREncodable {
 	public func toCBOR(options: SwiftCBOR.CBOROptions) -> SwiftCBOR.CBOR {
-		var res = CBOR.map([0: .utf8String(version), 1: security.toCBOR(options: options)])
+		let encodedVersion = readerAuthAllSupport ? Self.version2 : version
+        var res = CBOR.map([0: .utf8String(encodedVersion), 1: security.toCBOR(options: options)])
 		if let drms = deviceRetrievalMethods { res[2] = .array(drms.map { $0.toCBOR(options: options)}) }
 		if let sro = serverRetrievalOptions { res[3] = sro.toCBOR(options: options) }
-		if let oi = originInfos { res[5] = .array(oi.map {$0.toCBOR(options: CBOROptions()) }) }
+        if let oi = originInfos { res[5] = .array(oi.map { $0.toCBOR(options: options) }) }
+        else if readerAuthAllSupport { res[5] = .array([]) }
+        if readerAuthAllSupport { res[6] = .map([3: .boolean(true)]) }
 		if let rfus = self.rfus { for (i,r) in rfus.enumerated() { res[.negativeInt(UInt64(i))] = .utf8String(r) } }
 		logger.debug("DE: \(res.encode().toHexString())")
 		return res
@@ -150,6 +156,13 @@ extension DeviceEngagement: CBORDecodable {
 			serverRetrievalOptions = nil
 		}
 		if case let .array(obj5) = map[5] { originInfos = try obj5.map(OriginInfoWebsite.init(cbor:)) }
+        if let capabilities = map[6] {
+            guard v == Self.version2, case let .map(values) = capabilities, case .array = map[5] else { throw .invalidCbor("device engagement capabilities") }
+            if let support = values[3] {
+                guard support == .boolean(true) else { throw .invalidCbor("ReaderAuthAllSupport") }
+                readerAuthAllSupport = true
+            }
+        }
 		version = v
 	}
 }

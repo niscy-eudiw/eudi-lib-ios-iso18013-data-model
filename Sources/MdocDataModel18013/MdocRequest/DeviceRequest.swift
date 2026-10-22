@@ -39,6 +39,8 @@ public struct DeviceRequest: Sendable {
     public let docRequests: [DocRequest]
     /// Optional device request info (tag 24 encoded)
     public let deviceRequestInfo: DeviceRequestInfo?
+    /// Original embedded bytes, retained for ReaderAuthenticationAll.
+    public private(set) var deviceRequestInfoRawData: [UInt8]? = nil
     // optional reader auth all
     public let readerAuthAll: [ReaderAuth]?
     public let readerAuthAllRawCBOR: [CBOR]?
@@ -65,8 +67,10 @@ extension DeviceRequest: CBORDecodable {
             guard case let .tagged(.encodedCBORDataItem, .byteString(bytes)) = deviceReqInfoValue,
                   let decoded = try? CBOR.decode(bytes) else { throw .invalidCbor("DeviceRequest") }
             deviceRequestInfo = try DeviceRequestInfo(cbor: decoded)
+            deviceRequestInfoRawData = bytes
         } else { deviceRequestInfo = nil }
-        if case let .array(ra) = m[Keys.readerAuthAll] {
+        if let value = m[Keys.readerAuthAll] {
+            guard version == Self.version2, case let .array(ra) = value else { throw .invalidCbor("readerAuthAll") }
             guard !ra.isEmpty else { throw .invalidCbor("readerAuthAll array is empty") }
             readerAuthAllRawCBOR = ra
             do { readerAuthAll = try ra.map { try ReaderAuth(cbor: $0) } } catch { throw .invalidCbor("readerAuthAll") }
@@ -83,7 +87,7 @@ extension DeviceRequest: CBOREncodable {
         map[.utf8String(Keys.version.rawValue)] = .utf8String(version)
         map[.utf8String(Keys.docRequests.rawValue)] = .array(docRequests.map { $0.toCBOR(options: options) })
         if let deviceRequestInfo {
-            let bytes = deviceRequestInfo.toCBOR(options: options).encode(options: options)
+            let bytes = deviceRequestInfoRawData ?? deviceRequestInfo.toCBOR(options: options).encode(options: options)
             map[.utf8String(Keys.deviceRequestInfo.rawValue)] = .tagged(.encodedCBORDataItem, .byteString(bytes))
         }
         if let readerAuthAll { map[.utf8String(Keys.readerAuthAll.rawValue)] = readerAuthAll.toCBOR(options: options) }

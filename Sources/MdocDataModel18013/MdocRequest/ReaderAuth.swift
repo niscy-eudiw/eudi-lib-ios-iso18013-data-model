@@ -27,26 +27,32 @@ public struct ReaderAuth: Sendable {
 
 extension ReaderAuth: CBORDecodable {
     public init(cbor: CBOR) throws(MdocValidationError) {
-        // The signature is contained in an untagged COSE_Sign1 structure as defined in RFC 8152 and identified
-        guard let cose = Cose(type: .sign1, cbor: cbor) else { throw .invalidCbor("reader authentication") }
+        // Preflight before Cose.init, which indexes the four COSE_Sign1 fields.
+        guard case let .array(fields) = cbor, fields.count == 4,
+              case let .byteString(protectedBytes) = fields[0],
+              case let .map(unprotected) = fields[1], fields[2] == .null,
+              case .byteString = fields[3],
+              let decoded = try? CBOR.decode(protectedBytes), case let .map(protected) = decoded,
+              case .negativeInt = protected[.unsignedInt(1)],
+              let cose = Cose(type: .sign1, cbor: cbor) else { throw .invalidCbor("reader authentication") }
         coseSign1 = cose
-        guard let unprotectedHeader = cose.unprotectedHeader?.rawHeader,
-              case let .map(unprotectedHeaderMap) = unprotectedHeader
-        else { throw .invalidCbor("reader authentication") }
-
-        let x5chainHeaderKey = CBOR.unsignedInt(33)
-        if case let .byteString(certificateBytes) = unprotectedHeaderMap[x5chainHeaderKey] {
-            x5chain = [certificateBytes]
-        }
-        else if case let .array(certificateArray) = unprotectedHeaderMap[x5chainHeaderKey] {
-            x5chain = certificateArray.compactMap { certificateEntry in
-                if case let .byteString(certificateBytes) = certificateEntry {
-                    return certificateBytes
+        let label = CBOR.unsignedInt(33)
+        guard !(protected[label] != nil && unprotected[label] != nil),
+              let chain = protected[label] ?? unprotected[label] else { throw .invalidCbor("reader authentication x5chain") }
+        switch chain {
+        case .byteString(let bytes):
+            guard !bytes.isEmpty else { throw .invalidCbor("reader authentication x5chain") }
+            x5chain = [bytes]
+        case .array(let entries):
+            guard !entries.isEmpty else { throw .invalidCbor("reader authentication x5chain") }
+            x5chain = try entries.map { entry throws(MdocValidationError) in
+                guard case let .byteString(bytes) = entry, !bytes.isEmpty else {
+                    throw .invalidCbor("reader authentication x5chain")
                 }
-                return nil
+                return bytes
             }
+        default: throw .invalidCbor("reader authentication x5chain")
         }
-		else { throw .invalidCbor("reader authentication") }
     }
 }
 
